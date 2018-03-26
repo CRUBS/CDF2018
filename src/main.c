@@ -36,6 +36,7 @@ extern SemaphoreHandle_t xMutex_com_asser;
 /*internal public functions ===============================*/
 
 int main (void);
+void renvoirecu(void);
 void blink(void);
 
 /************************************************************
@@ -58,8 +59,9 @@ int main(void)
     /* creation des mutexs et semaphore static */
     xMutex_com_asser = xSemaphoreCreateMutex();
     /* creation des taches statique */
-    xTaskCreate(blink,"allumer",100,NULL,1,NULL);
-    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
+    //xTaskCreate(blink,"allumer",100,NULL,1,NULL);
+    xTaskCreate(renvoirecu,"allumer",100,NULL,1,NULL);
+//    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
     vTaskStartScheduler();    /* RTOS_USAGE */
     while(1){}; // should not land here
@@ -82,5 +84,14 @@ void blink(void) {
         vTaskDelay(500);
     }
 }
-
+void renvoirecu(void)
+{
+    char res_uart=0;
+    for(;;)
+    {
+        LED0=~LED0;
+        renvoi_le_recu(&uart9);
+        vTaskDelay(200);
+    }
+}
 
