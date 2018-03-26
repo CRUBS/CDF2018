@@ -37,6 +37,7 @@ INCDIR+=-Isrc/asservissement
 INCDIR+= -Isrc/system
 INCDIR+= -Isrc/drivers/uart
 INCDIR+= -Isrc/drivers/adc
+INCDIR+= -Isrc/drivers/i2c
 INCDIR+= -Isrc/r_freertos
 INCDIR+= -Isrc/r_freertos/source/include
 INCDIR+= -Isrc/r_freertos/source/portable/RX200

@@ -18,6 +18,9 @@
 #ifndef UART_H // multiple inclusion guard
 #define UART_H
 
+#include "stdio.h"
+#include "stdlib.h"
+
 #include "iodefine.h"
 #include "RPBRX210.h"
 #include "interrupt_handlers.h"

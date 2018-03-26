@@ -17,6 +17,7 @@
 #include "RPBRX210.h"
 
 #include "uart.h"
+#include "i2c.h"
 #include "com_uart.h"
 #include "adc.h"
 
@@ -36,9 +37,8 @@ extern SemaphoreHandle_t xMutex_com_asser;
 /*internal public functions ===============================*/
 
 int main (void);
-void renvoirecu(void);
 void blink(void);
-
+void test_i2c(void);
 /************************************************************
  Function Name: main
    Description: Initialize the hardware, start the tasks, start the RTOS.
@@ -59,8 +59,8 @@ int main(void)
     /* creation des mutexs et semaphore static */
     xMutex_com_asser = xSemaphoreCreateMutex();
     /* creation des taches statique */
-    //xTaskCreate(blink,"allumer",100,NULL,1,NULL);
-    xTaskCreate(renvoirecu,"allumer",100,NULL,1,NULL);
+//    xTaskCreate(blink,"allumer",100,NULL,1,NULL);
+    xTaskCreate(test_i2c,"allumer",100,NULL,1,NULL);
 //    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
     vTaskStartScheduler();    /* RTOS_USAGE */
@@ -84,14 +84,16 @@ void blink(void) {
         vTaskDelay(500);
     }
 }
-void renvoirecu(void)
+
+void test_i2c(void)
 {
-    char res_uart=0;
+    char addr = 0x00;
+    char reg = 0x01;
+//    start_i2c();
     for(;;)
     {
         LED0=~LED0;
-        renvoi_le_recu(&uart9);
+        printf("Salut Elo :) \r\n Alors elle marche la com ?\n\r");
         vTaskDelay(200);
     }
 }
-

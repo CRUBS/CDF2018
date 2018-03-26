@@ -7,6 +7,7 @@
 
 /*****************	includes	**************************/
 #include "i2c.h"
+#include "RPBRX210.h"
 /*****************	constants	**************************/
 /*****************	private variables	******************/
 /*****************	privates functions	declaration ******/
@@ -55,9 +56,22 @@ static void init_hw_i2c_lidar()
     SCI5.SPMR.BYTE = 0;
 
     /* enable transmit/receive and interrupt*/
-    SCI5.SCR.BYTE |= 0xB0;
+    SCI5.SCR.BYTE |= 0xF4;
     IR(SCI5,TXI5)=0;
     IPR(SCI9,TXI9)=0x2;
     IEN(SCI5,TXI5)=1;       //enable interrupt 
 }
 /*****************	public functions	******************/
+int start_i2c(void)
+{
+    /* init hardxare serial tr in i2c mode */
+    init_hw_i2c_lidar();
+    SCI5.SIMR3.BIT.IICSTAREQ = 1;
+    SCI5.SIMR3.BIT.IICSDAS = 0b01;
+    SCI5.SIMR3.BIT.IICSCLS = 0b01;
+    while(SCI5.SIMR3.BIT.IICSTIF!=1);
+    SCI5.SIMR3.BIT.IICSTIF=0;
+    LED0=~LED0;
+    return 0;
+}
+

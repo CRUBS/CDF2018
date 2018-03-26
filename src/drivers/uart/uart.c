@@ -150,7 +150,15 @@ void put_char(unsigned char mess, _s_uart *uart)
        // uart.tx_ien = 1;
     }
 }
-
+/***********************************************************
+*   Redirection de stdout vers uart 9
+*
+***********************************************************/
+int (putchar)(int ch)
+{
+    put_char(ch, & uart9);
+    return ch;
+}
 
 
 /************************************************************
