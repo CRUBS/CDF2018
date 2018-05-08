@@ -16,10 +16,14 @@
 #include 	<r_freertos.h>
 #include "RPBRX210.h"
 
+#include "robot.h"
 #include "uart.h"
 #include "i2c.h"
 #include "com_uart.h"
+#include "odometrie.h"
+#include "asserv.h"
 #include "adc.h"
+#include "detection.h"
 
 /*macros ==================================================*/
 /*constants ==============================================*/
@@ -29,11 +33,25 @@
 /*private functions =======================================*/
 /*entry points ============================================*/
 /*public variables ========================================*/
+        /* creation des mutex */
+SemaphoreHandle_t xOdo_mutex;
+SemaphoreHandle_t xCmd_mutex;
+SemaphoreHandle_t xComAsser_mutex;
+SemaphoreHandle_t xPid_mutex;
+SemaphoreHandle_t xDetec_mutex;
+
+    /* creation des reference de tâches */
+static TaskHandle_t vOdo;
+static TaskHandle_t vAsserv;
+static TaskHandle_t vDetection;
+        /* structure de pilotage */
+_s_odo cmd={0,0,0,0,0,0,0,0};
+
+
 unsigned long   ulTMR0OverflowCount=0;
 volatile unsigned long ulHighFrequencyTickCount = 0;
 
 extern _s_uart uart9;
-extern SemaphoreHandle_t xMutex_com_asser;
 /*internal public functions ===============================*/
 
 int main (void);
@@ -57,31 +75,57 @@ int main(void)
     LED1_OFF;
     LED2_OFF;
     /* creation des mutexs et semaphore static */
-    xMutex_com_asser = xSemaphoreCreateMutex();
+    xComAsser_mutex = xSemaphoreCreateMutex();
+    xOdo_mutex= xSemaphoreCreateMutex();
+    xCmd_mutex = xSemaphoreCreateMutex();
+    xPid_mutex = xSemaphoreCreateMutex();
+    xDetec_mutex = xSemaphoreCreateMutex();
+
     /* creation des taches statique */
-//    xTaskCreate(blink,"allumer",100,NULL,1,NULL);
-    xTaskCreate(test_i2c,"allumer",100,NULL,1,NULL);
-//    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
+    xTaskCreate(blink,"allumer",100,NULL,1,NULL);
+    xTaskCreate(write_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
+    xTaskCreate(odometrie,"odo",200,NULL,6,&vOdo);
+    xTaskCreate(asserv,"asserv",200,NULL,5,&vAsserv);
+    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
+        &uart9,1,NULL);
+//    xTaskCreate(detection,"detection",200,NULL,3,&vDetection);
     vTaskStartScheduler();    /* RTOS_USAGE */
     while(1){}; // should not land here
     return 0;
 }
 
 /*-----------------------------------------------------------*/
+/* tache de gestion */
+void master(void)
+{
+    /*init des variables */
+    enum{reset,run,action,stop}state;
+
+    state = reset;
+
+    for(;;)
+    {
+        switch(state)
+        {
+            case reset:
+            break;
+            case run:
+            break;
+            case action:
+            break;
+            case stop:
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+}
 
 void blink(void) {
-    char *res_adc, *test;
-    unsigned short a=121;
-    for(;;) {
-        LED1=~LED1;
-        a = get_adc(0);
-        sprintf(test,"val recu 1 : %i\r\n",a);
-        put_string(test,&uart9);
-        a = get_adc(2);
-        sprintf(test,"val recu 2 : %i\r\n",a);
-        put_string(test,&uart9);
-        vTaskDelay(500);
+    for(;;)
+    {
+        LED0=~LED0;
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -89,11 +133,11 @@ void test_i2c(void)
 {
     char addr = 0x00;
     char reg = 0x01;
-//    start_i2c();
+    start_i2c();
     for(;;)
     {
         LED0=~LED0;
-        printf("Salut Elo :) \r\n Alors elle marche la com ?\n\r");
+//        printf("Salut Elo :) \r\n Alors elle marche la com ?\n\r");
         vTaskDelay(200);
     }
 }

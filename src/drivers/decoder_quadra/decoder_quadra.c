@@ -20,8 +20,8 @@ void init_mtclk(void)
 	MTU.TSYR.BYTE=0x00;
 
 	// on efface les compteurs
-	compteur_g=INIT_COD;		//mise a la moitier du compteur gauche pour eviter le problème d'over/underflow dans un premier temps
-	compteur_d=INIT_COD;		//mise à la moitier du compteur droite pour eviter le problème d'over/underflow dans un premier temps
+	COMPTEUR_G=INIT_COD;		//mise a la moitier du compteur gauche pour eviter le problème d'over/underflow dans un premier temps
+	COMPTEUR_D=INIT_COD;		//mise à la moitier du compteur droite pour eviter le problème d'over/underflow dans un premier temps
 
 	// netoyage des TGRA et TGRB
 	MTU1.TGRA=0;
@@ -47,8 +47,8 @@ void mtclk_start(void)
 /**********************************************************************************
 *	Function wich reinit register of decoder in quadra
 **********************************************************************************/
-void reset_cod(void)
+void mtclk_reset(void)
 {
-	compteur_g =INIT_COD;
-	compteur_d =INIT_COD;
+	COMPTEUR_G =INIT_COD;
+	COMPTEUR_D =INIT_COD;
 }

@@ -14,8 +14,8 @@
 * History       : DD.MM.YYYY     Version     Description
 *                 17.01.2017     Ver. 1 
 ************************************************************/
-#ifndef DEF_ODOMETRIE// multiple inclusion guard
-#define DEF_ODOMETRIE
+#ifndef DECODER_QUADRALY04052018// multiple inclusion guard
+#define DECODER_QUADRALY04052018
 
 /***********************************************************
 INCLUDE
@@ -36,50 +36,14 @@ Macro definitions
 #define sens_rot_d  MTU2.TSR.BIT.TCFD
 
     // les compteurs maintenant
-#define compteur_d MTU1.TCNT
-#define compteur_g MTU2.TCNT
+#define COMPTEUR_D MTU1.TCNT
+#define COMPTEUR_G MTU2.TCNT
     //reset value of codeur register
 #define INIT_COD    0x8000
 
 /************************************************************
 Exported global functions (to be accessed by other files)
 ************************************************************/
-
-// struct to define parametre en odometrie
-//extern typedef struct odometrie odometrie;
-struct odometrie{
-/* distance of each side in tck */
-    int drg_tck[2];
-    int drd_tck[2];
-// calcul in tck of the absolute position
-    unsigned int x_tck;
-    unsigned int y_tck;
-
-/* angle of the robot between origin */
-    float theta_tck;    //angle en tck
-
-/* calcul with tck  */
-    float dist_tck;
-    int angl_tck;
-};
-
-struct speed{
-/* speed by wheel */
-    int vrd_tck[2];
-    int vrg_tck[2];
-/* speed of robot */
-    int v_tck;
-    int w_tck;
-};
-
-struct acc{
-/* acc by wheel */
-    int ard_tck;
-    int arg_tck;
-/* acc of robot */
-    int a_tck;
-    int a_ang_tck;
-};
 
 /*******************************************************************************
 *
@@ -92,4 +56,5 @@ struct acc{
 
 void	init_mtclk(void);		// fonction d'initialisation du module de comptage
 void	mtclk_start(void);		// démarre le décodage en quadrature
+void mtclk_reset(void);
 #endif

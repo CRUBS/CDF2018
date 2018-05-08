@@ -12,6 +12,7 @@
 #ifndef LYI2C20022018
 #define LYI2C20022018
 
+#include <stdio.h>
 #include "iodefine.h"
 #include "RPBRX210.h"
 

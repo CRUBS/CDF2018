@@ -93,7 +93,7 @@
 #define configCPU_CLOCK_HZ              (50000000UL)
 #define configPERIPHERAL_CLOCK_HZ       (32000000UL)
 
-#define configTICK_RATE_HZ              ( ( TickType_t ) 1000 )
+#define configTICK_RATE_HZ              ( ( TickType_t ) 10000 )
 #define configUSE_TICKLESS_IDLE         0
 #define configMINIMAL_STACK_SIZE        ( ( unsigned short ) 140 )
 #define configTOTAL_HEAP_SIZE           ( ( size_t ) ( 50 * 1024 ) )

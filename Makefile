@@ -10,7 +10,7 @@
 #
 
 ## Tools configuration with gnurx
-TOOL_PATH=/opt/gnurx
+TOOL_PATH=~/toolchains/gcc_gnurx
 JLINK_PATH=/usr/bin
 
 CC=$(TOOL_PATH)/bin/rx-elf-gcc
@@ -34,18 +34,22 @@ OBJ=$(C_OBJ) $(ASM_OBJ)
 # include directories
 INCDIR+=-Isrc
 INCDIR+=-Isrc/asservissement
+INCDIR+=-Isrc/detection
 INCDIR+= -Isrc/system
 INCDIR+= -Isrc/drivers/uart
 INCDIR+= -Isrc/drivers/adc
 INCDIR+= -Isrc/drivers/i2c
+INCDIR+= -Isrc/drivers/pwm
+INCDIR+= -Isrc/drivers/decoder_quadra
 INCDIR+= -Isrc/r_freertos
 INCDIR+= -Isrc/r_freertos/source/include
 INCDIR+= -Isrc/r_freertos/source/portable/RX200
 
-CFLAGS= -g $(INCDIR) -O2 -std=c11 -nofpu -mcpu=rx200
-LDFLAGS= -L$(TOOL_PATH)/lib/gcc/rx-elf/4.8-GNURX_v15.02/no-fpu-libs -lgcc3
+CFLAGS= -g $(INCDIR) -O2 -std=c11 -nofpu -mcpu=rx200 -Wall
+#LDFLAGS= -L$(TOOL_PATH)/lib/gcc/rx-elf/4.8.4.201801-GNURX/no-fpu-libs/ -lgcc 
+#LDFLAGS+= -L$(TOOL_PATH)/rx-elf/lib/ -lm -lc
 
-LIBRARY=lib.a
+LIBRARY=lib.a libgcc.a
 
 LINKER_SCRIPT=scripts/FreeRTOS_rx210.gsi
 
