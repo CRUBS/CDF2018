@@ -141,6 +141,12 @@ void read_data_asserv(_s_uart *uart)
                     asservD.d = asserv_var[4];
                     xSemaphoreGive(xPid_mutex);
                 }
+                if(xSemaphoreTake(xCmd_mutex,portMAX_DELAY))
+                {
+                    cmd.orientation = asserv_var[5];
+                    cmd.norme = asserv_var[6];
+                    xSemaphoreGive(xCmd_mutex);
+                }
             }
     }
 
@@ -163,16 +169,12 @@ void write_data_asserv(_s_uart *uart)
     init_asserv_var();
     for(;;)
     {
-        LED1=~LED1;
+        //LED1=~LED1;
 
         if(xSemaphoreTake(xOdo_mutex,portMAX_DELAY))
         {
             asserv_var[11]=(int)odo.orientation;
             asserv_var[12]=(int)odo.norme;
-            asserv_var[13]=(int)odo.ang_vitesse;
-            asserv_var[14]=(int)odo.vitesse;
-            asserv_var[15]=(int)odo.ang_acceleration;
-            asserv_var[16]=(int)odo.acceleration;
             xSemaphoreGive(xOdo_mutex);
         }
 
@@ -183,7 +185,7 @@ void write_data_asserv(_s_uart *uart)
             asserv_var[3]=(int) asservD.p;
             asserv_var[4]=(int) asservD.d;
             xSemaphoreGive(xPid_mutex);
-        } 
+        }
         if(xSemaphoreTake(xComAsser_mutex,portMAX_DELAY)\
             ==pdTRUE)
         {
@@ -220,7 +222,7 @@ void write_data_asserv(_s_uart *uart)
             xSemaphoreGive(xComAsser_mutex);
         }
         /* ne renvoi les data que toutes les 250 ms */
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 

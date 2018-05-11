@@ -18,15 +18,18 @@
 
 #include "robot.h"
 #include "uart.h"
-#include "i2c.h"
 #include "com_uart.h"
 #include "odometrie.h"
 #include "asserv.h"
 #include "adc.h"
+#include "pwm_RX210.h"
 #include "detection.h"
+#include "gene_traj.h"
+#include "SERVO.h"
 
 /*macros ==================================================*/
 /*constants ==============================================*/
+//#define UART
 /*types ===================================================*/
 /*structures ==============================================*/
 /*private variables =======================================*/
@@ -39,14 +42,21 @@ SemaphoreHandle_t xCmd_mutex;
 SemaphoreHandle_t xComAsser_mutex;
 SemaphoreHandle_t xPid_mutex;
 SemaphoreHandle_t xDetec_mutex;
+SemaphoreHandle_t xServo_mutex;
 
     /* creation des reference de tâches */
 static TaskHandle_t vOdo;
 static TaskHandle_t vAsserv;
 static TaskHandle_t vDetection;
+static TaskHandle_t vTraj;
         /* structure de pilotage */
-_s_odo cmd={0,0,0,0,0,0,0,0};
+_s_odo cmd={0,0,600,0,0};
+extern _s_odo odo;
+extern _s_sharp sharp;
+extern uint8_t couleur_traj;
 
+
+/* point trajectoire */
 
 unsigned long   ulTMR0OverflowCount=0;
 volatile unsigned long ulHighFrequencyTickCount = 0;
@@ -56,7 +66,10 @@ extern _s_uart uart9;
 
 int main (void);
 void blink(void);
-void test_i2c(void);
+void init_robot(void);
+void master(void);
+extern void stop_deplacement(void);
+extern void gene_traj(void);
 /************************************************************
  Function Name: main
    Description: Initialize the hardware, start the tasks, start the RTOS.
@@ -69,27 +82,43 @@ int main(void)
     char *hello ="hello les touneys\r\n";
     init_uart9();
     init_adc();
+    init_robot();
+    init_pwm_asser();
     put_string(hello,&uart9);
 
     LED0_ON;
     LED1_OFF;
     LED2_OFF;
+    PUISSANCE = 1;
+
     /* creation des mutexs et semaphore static */
     xComAsser_mutex = xSemaphoreCreateMutex();
     xOdo_mutex= xSemaphoreCreateMutex();
     xCmd_mutex = xSemaphoreCreateMutex();
     xPid_mutex = xSemaphoreCreateMutex();
     xDetec_mutex = xSemaphoreCreateMutex();
+    xServo_mutex = xSemaphoreCreateMutex();
 
     /* creation des taches statique */
     xTaskCreate(blink,"allumer",100,NULL,1,NULL);
+#ifdef UART
     xTaskCreate(write_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
-    xTaskCreate(odometrie,"odo",200,NULL,6,&vOdo);
-    xTaskCreate(asserv,"asserv",200,NULL,5,&vAsserv);
     xTaskCreate(read_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
-//    xTaskCreate(detection,"detection",200,NULL,3,&vDetection);
+#endif
+    xTaskCreate(odometrie,"odo",200,NULL,4,&vOdo);
+    //vTaskSuspend(vOdo);
+
+    xTaskCreate(asserv,"asserv",300,NULL,4,&vAsserv);
+    vTaskSuspend(vAsserv);
+
+   xTaskCreate(gene_traj,"traj",300,NULL,2,&vTraj);
+//   vTaskSuspend(vTraj);
+
+    xTaskCreate(detection,"detection",200,NULL,6,&vDetection);
+    xTaskCreate(PWM_servo,"servo",100,NULL,1,NULL);
+    xTaskCreate(master,"orga",300,NULL,5,NULL);
     vTaskStartScheduler();    /* RTOS_USAGE */
     while(1){}; // should not land here
     return 0;
@@ -100,22 +129,81 @@ int main(void)
 void master(void)
 {
     /*init des variables */
-    enum{reset,run,action,stop}state;
+    TickType_t xStart=0;
+    enum{reset,wait,run,action,stop}state;
+    float save_norme=0,save_orient=0;
 
     state = reset;
-
     for(;;)
     {
         switch(state)
         {
             case reset:
+//                    printf("state: reset\n\r");
+                    xStart = xTaskGetTickCount();
+                    if(BP_INIT)
+                    {
+                        LED2=1;
+                        LED1=1;
+                        servo_fermee();
+                        state = wait;
+                    }
+//                    else{servo_ouvert();}
+            break;
+            case wait:
+                if(!LANCEUR)
+                {
+                    LED2=0;
+                    vTaskResume(vAsserv);
+                    vTaskResume(vTraj);
+                    printf("state: run\n\r");
+                    state = run;
+                }
             break;
             case run:
-            break;
-            case action:
+                if(xSemaphoreTake(xDetec_mutex,0))
+                {
+                    if(sharp.dist_av<20 || sharp.dist_ar<20)
+                    {
+                        LED1=0;
+                        vTaskSuspend(vTraj);
+                        taskENTER_CRITICAL();
+                            save_norme = cmd.norme;
+                            save_orient =cmd.orientation;
+                        //vTaskSuspend(vAsserv);
+                        stop_deplacement();
+                        taskEXIT_CRITICAL();
+                        state = stop;
+                    }
+                    xSemaphoreGive(xDetec_mutex);
+                }
             break;
             case stop:
+                if(xSemaphoreTake(xDetec_mutex,0))
+                {
+                    if(sharp.dist_av>20 && sharp.dist_ar>20)
+                    {
+                        if(xSemaphoreTake(xCmd_mutex,portMAX_DELAY))
+                        {
+                            cmd.norme=save_norme;
+                            cmd.orientation=save_orient;
+                            xSemaphoreGive(xCmd_mutex);
+                        }
+                        vTaskResume(vTraj);
+                        state = run;
+                        LED1=1;
+                    }
+                    xSemaphoreGive(xDetec_mutex);
+                }
+                /* ajouter une notification pour repartir si
+                on est devant interrupteur dans le générateu
+                de trajectoir */
             break;
+        }
+        if((xTaskGetTickCount()-xStart)>pdMS_TO_TICKS(50000))
+        {
+            LED2 = 1;
+            PUISSANCE = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(200));
     }
@@ -124,20 +212,36 @@ void master(void)
 void blink(void) {
     for(;;)
     {
+        if(BP_INIT)
+        {
+            if(xSemaphoreTake(xOdo_mutex,portMAX_DELAY))
+            {
+                odo.norme=0;
+                odo.orientation=0;
+                xSemaphoreGive(xOdo_mutex);
+            }
+        }
         LED0=~LED0;
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
-void test_i2c(void)
+void init_robot(void)
 {
-    char addr = 0x00;
-    char reg = 0x01;
-    start_i2c();
-    for(;;)
-    {
-        LED0=~LED0;
-//        printf("Salut Elo :) \r\n Alors elle marche la com ?\n\r");
-        vTaskDelay(200);
-    }
+   /* b1 a5 b0 a7 */ 
+    /* switch en input */
+    PORTB.PMR.BIT.B0 = 0;
+    PORTB.PMR.BIT.B1 = 0;
+    PORTA.PMR.BIT.B5 = 0;
+    PORTA.PMR.BIT.B7 = 0;
+
+    PORTB.PDR.BIT.B0 = 0;
+    PORTB.PDR.BIT.B1 = 0;
+    PORTA.PDR.BIT.B5 = 0;
+    PORTA.PDR.BIT.B7 = 0;
+    /* bit de puissance */
+    PORTB.PMR.BIT.B4 =0;
+    PORTB.PDR.BIT.B4 = 1;
+
 }
+

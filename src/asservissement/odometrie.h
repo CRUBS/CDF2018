@@ -37,9 +37,6 @@ typedef struct
     float x; /* position x en mm */
     float y; /* postion y en mm */
     int vitesse;
-    int acceleration;
-    int ang_vitesse;
-    int ang_acceleration;
     float orientation; /* angle en degré */
     float norme;
 

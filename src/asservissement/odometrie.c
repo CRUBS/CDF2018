@@ -32,7 +32,7 @@ static float cos_tab[360]={1.0000, 0.9998, 0.9994, 0.9986,\
 /***************** 	privates functions	declaration ******/
 /*****************  private type & struct	**************/
 /***************** public variables **********************/
-_s_odo odo={0,0,0,0,0,0,0};
+_s_odo odo={0,0,0,0,0};
 /**********************************************************
  *
  * 	function:
@@ -66,7 +66,7 @@ TickType_t xLastWakeUp;
     xLastWakeUp = xTaskGetTickCount();
     for(;;)
     {
-        vTaskDelayUntil(&xLastWakeUp, pdMS_TO_TICKS(250));//TPS_ECH);
+        vTaskDelayUntil(&xLastWakeUp, TPS_ECH);
         #ifdef SPEED_ODO
             PORT2.PODR.BIT.B2 =1;
         #endif
@@ -78,27 +78,13 @@ TickType_t xLastWakeUp;
         /* on reset les compteurs */
         mtclk_reset();
         /* sauvegarde de n-1 */
-        ang_vit[1]=ang_vit[0];
-        dist_vit[1]=dist_vit[0];
-        /* calcul odo */
-        angle +=  180*asinf((codeur_g-codeur_d)\
-                        /L_ROBOT)/PI;
-        if(angle >= 180){angle-=360;}
-        else if(angle<=-180){angle +=360;}
-
-        somme = (codeur_g+codeur_d)/2.0;
-
-        ang_vit[0]= angle/DT;
-        dist_vit[0]= somme/DT;
-
         if(xSemaphoreTake(xOdo_mutex,portMAX_DELAY))
         {
-            odo.orientation = angle;
-            odo.norme += somme;
-            odo.vitesse = (int)(dist_vit[0]);
-            odo.ang_vitesse = (int)(ang_vit[0]);
-            odo.ang_acceleration = (ang_vit[0]-ang_vit[1])/DT;
-            odo.acceleration = (dist_vit[0]-dist_vit[1])/DT;
+            odo.orientation += 180*asinf((codeur_g-codeur_d)\
+                        /L_ROBOT)/PI;
+            odo.norme += (codeur_g+codeur_d)/2.0;
+            angle = odo.orientation;
+            somme = odo.norme;
 
             //printf("somme: %.0f mm, angle:%.1f°\n\r",odo.norme,odo.orientation);
             xSemaphoreGive(xOdo_mutex);

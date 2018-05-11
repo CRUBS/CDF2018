@@ -40,6 +40,7 @@ INCDIR+= -Isrc/drivers/uart
 INCDIR+= -Isrc/drivers/adc
 INCDIR+= -Isrc/drivers/i2c
 INCDIR+= -Isrc/drivers/pwm
+INCDIR+= -Isrc/SERVO
 INCDIR+= -Isrc/drivers/decoder_quadra
 INCDIR+= -Isrc/r_freertos
 INCDIR+= -Isrc/r_freertos/source/include

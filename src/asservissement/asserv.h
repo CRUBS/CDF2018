@@ -36,8 +36,10 @@ extern SemaphoreHandle_t xPid_mutex;
 typedef struct
 {
     uint16_t p;
+    float    i;
     uint16_t d;
 }_s_pid;
 /**********		functions			**********************/
 TaskHandle_t asserv(void);
+void stop_deplacement(void);
 #endif
