@@ -22,7 +22,7 @@
 _s_pid asservD={50,35,150};
 //_s_pid asservD={0,0,0};
 //_s_pid asservO={28,0,41200.0};
-_s_pid asservO={300,90,65000};
+_s_pid asservO={300,95,65000};
 /*****************	public functions	******************/
 
 TaskHandle_t asserv(void)

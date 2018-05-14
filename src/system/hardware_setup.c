@@ -34,6 +34,7 @@ SYSTEM.PRCR.WORD=0xA501; //write enable for clock register
 SYSTEM.SCKCR3.BIT.CKSEL=1; //modification de la main clock ( 001 -> HOCO -> 32MHz)
 /* set all module clock at 32 MHz */
 SYSTEM.SCKCR.LONG=0x00000000;
+//MSTP(MTU) = 0; // MTU(MTU0 to MTU5) module stop state is canceled
 SYSTEM.PRCR.WORD=0xA500; //write disable for all register
 
 
@@ -52,10 +53,11 @@ PORT1.PDR.BYTE = 0xFF ;		// all are output
 /* Port 3 - SW1 */
 PORT3.PODR.BYTE = 0x00 ;    /* */
 PORT3.PMR.BYTE  = 0x00 ;    /* All GPIO for now */
-MPC.P31PFS.BYTE = 0x00 ;    //
-PORT3.PMR.BYTE  = 0x00 ;    // all port use in I/O
+MPC.P32PFS.BYTE = 0x01 ;    //
+MPC.P34PFS.BYTE = 0x01 ;    //
+PORT3.PMR.BYTE  = 0x10 ;    // all port use in I/O
 PORT3.PODR.BYTE = 0x00 ; 	// all output are low
-PORT3.PDR.BYTE = 0x00 ;		// all are output
+PORT3.PDR.BYTE = 0xFF ;		// all are output
 
 /* Port A - MTCLKA & MTCLKB & MTCLKC & MTCLKD */
 PORTA.PODR.BYTE = 0x00 ;    /* */
@@ -89,6 +91,14 @@ MPC.PC1PFS.BYTE = 0x01 ;	// port = MTIOC3A (output)
 PORTC.PMR.BYTE  = 0b00000011 ;    // port 0 & 1 use as function
 PORTC.PODR.BYTE = 0x00 ; 	// all output are low
 PORTC.PDR.BYTE = 0xFF ;	// all are output
+
+/* port E servo */
+MPC.PE1PFS.BYTE = 1;
+MPC.PE3PFS.BYTE = 1;
+PORTE.PMR.BIT.B1 = 1; 
+PORTE.PMR.BIT.B3 = 1; 
+PORTE.PDR.BIT.B1 = 1;
+PORTE.PDR.BIT.B3 = 1;
 
 /*Port 4 - */
 PORT4.PODR.BYTE = 0;

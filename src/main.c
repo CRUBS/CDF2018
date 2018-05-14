@@ -46,8 +46,9 @@ SemaphoreHandle_t xServo_mutex;
 
     /* creation des reference de tâches */
 static TaskHandle_t vOdo;
-static TaskHandle_t vAsserv;
-static TaskHandle_t vDetection;
+TaskHandle_t vAsserv;
+TaskHandle_t vDetection;
+TaskHandle_t vServo;
 static TaskHandle_t vTraj;
         /* structure de pilotage */
 _s_odo cmd={0,0,600,0,0};
@@ -102,9 +103,9 @@ int main(void)
     /* creation des taches statique */
     xTaskCreate(blink,"allumer",100,NULL,1,NULL);
 #ifdef UART
-    xTaskCreate(write_data_asserv,"asserv_com_read",300,\
+ //   xTaskCreate(write_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
-    xTaskCreate(read_data_asserv,"asserv_com_read",300,\
+  //  xTaskCreate(read_data_asserv,"asserv_com_read",300,\
         &uart9,1,NULL);
 #endif
     xTaskCreate(odometrie,"odo",200,NULL,4,&vOdo);
@@ -117,7 +118,8 @@ int main(void)
 //   vTaskSuspend(vTraj);
 
     xTaskCreate(detection,"detection",200,NULL,6,&vDetection);
-    xTaskCreate(PWM_servo,"servo",100,NULL,1,NULL);
+    xTaskCreate(PWM_servo,"servo",100,NULL,1,&vServo);
+    vTaskSuspend(vServo);
     xTaskCreate(master,"orga",300,NULL,5,NULL);
     vTaskStartScheduler();    /* RTOS_USAGE */
     while(1){}; // should not land here
@@ -133,14 +135,14 @@ void master(void)
     enum{reset,wait,run,action,stop}state;
     float save_norme=0,save_orient=0;
 
+    servo_fermee();
     state = reset;
     for(;;)
     {
         switch(state)
         {
             case reset:
-//                    printf("state: reset\n\r");
-                    xStart = xTaskGetTickCount();
+                xStart = xTaskGetTickCount();
                     if(BP_INIT)
                     {
                         LED2=1;
@@ -151,6 +153,7 @@ void master(void)
 //                    else{servo_ouvert();}
             break;
             case wait:
+                xStart = xTaskGetTickCount();
                 if(!LANCEUR)
                 {
                     LED2=0;
@@ -200,7 +203,7 @@ void master(void)
                 de trajectoir */
             break;
         }
-        if((xTaskGetTickCount()-xStart)>pdMS_TO_TICKS(50000))
+        if((xTaskGetTickCount()-xStart)>pdMS_TO_TICKS(90000))
         {
             LED2 = 1;
             PUISSANCE = 0;
